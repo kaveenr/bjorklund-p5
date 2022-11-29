@@ -13,15 +13,39 @@ let curStep = 0;
 let curNote = 0;
 let lastUpdated = 0;
 
-let kickSound, snareSound, hatSound, melodySynth;
+let drumKit, melodySynth, reverb;
 function preload() {
-  soundFormats('mp3');
-  kickSound = loadSound('assets/kick');
-  kickSound.playMode('restart');
-  snareSound = loadSound('assets/snare');
-  snareSound.playMode('restart');
-  hatSound = loadSound('assets/hat');
-  hatSound.playMode('restart');
+
+  reverb = new Tone.Reverb(0.5).toDestination();
+  drumKit = new Tone.Sampler({
+    urls: {
+      C1: "kick.mp3",
+      D1: "snare.mp3",
+      E1: "hat.mp3"
+    },
+    baseUrl: "assets/"
+  }).toDestination();
+  
+  melodySynth = new Tone.PolySynth(Tone.MonoSynth, {
+    volume: -8,
+    oscillator: {
+      type: "sine"
+    },
+    envelope: {
+      attack: 0.05,
+      decay: 0.3,
+      sustain: 0.4,
+      release: 0.8,
+    },
+    filterEnvelope: {
+      attack: 0.001,
+      decay: 0.7,
+      sustain: 0.1,
+      release: 0.8,
+      baseFrequency: 300,
+      octaves: 4
+    }
+  }).connect(reverb);
 }
 
 let kickPattern;
@@ -32,16 +56,16 @@ function setup() {
   noLoop();
   patternSetup();
 
-  reverb = new p5.Reverb();
-	reverb.drywet(0.5);
-  melodySynth = new p5.MonoSynth();
-  melodySynth.amp(0.5);
-	melodySynth.setADSR(0.1, 0.1);
-  melodySynth.disconnect();
+  // reverb = new p5.Reverb();
+	// reverb.drywet(0.5);
+  // melodySynth = new p5.MonoSynth();
+  // melodySynth.amp(0.5);
+	// melodySynth.setADSR(0.1, 0.1);
+  // melodySynth.disconnect();
 
-  snareSound.disconnect();
-  reverb.process(melodySynth, 3, 2);
-  reverb.process(snareSound, 2, 2);
+  // snareSound.disconnect();
+  // reverb.process(melodySynth, 3, 2);
+  // reverb.process(snareSound, 2, 2);
 
   gui = createGui("Euclidean Groove Thing");
   gui.prototype.addHTML("Sequencer Control", "<hr/>")
@@ -79,7 +103,7 @@ function patternSetup() {
 
 function togglePlay() {
   if (!isLooping()) {
-    userStartAudio();
+    Tone.start();
     loop();    
   } else {
     noLoop()
@@ -90,7 +114,7 @@ function togglePlay() {
 function draw() {
   
   // Wrap around step
-  if (curStep > n ) curStep = 0;
+  if (curStep >= n ) curStep = 0;
   if (curNote > melodyScale.length) curNote = 0;
 
   // Tempo
@@ -99,10 +123,12 @@ function draw() {
     lastUpdated = millis();
    
     // Trigger Sounds
-    if (kickPattern[curStep] == 'x') kickSound.play();
-    if (snarePattern[curStep] == 'x') snareSound.play();
-    if (hatPattern[curStep] == 'x') hatSound.play();
-    if (melodyPattern[curStep] == 'x') melodySynth.play(melodyScale[curNote] + 4, 0.8, 0, 0.2);
+    const drumNotes = []
+    if (kickPattern[curStep] == 'x') drumNotes.push("C1");
+    if (snarePattern[curStep] == 'x') drumNotes.push("D1");
+    if (hatPattern[curStep] == 'x') drumNotes.push("E1");
+    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.05);
+    drumKit.triggerAttackRelease(drumNotes);
 
     patternSetup();
 
