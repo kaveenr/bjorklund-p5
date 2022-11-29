@@ -90,23 +90,27 @@ function togglePlay() {
 function draw() {
   
   // Wrap around step
-  if (curStep >= n) curStep = 0;
+  if (curStep > n ) curStep = 0;
   if (curNote > melodyScale.length) curNote = 0;
-  
+
   // Tempo
   const delayTime = 60000 / bpm;
   if (millis() > lastUpdated + delayTime) {
     lastUpdated = millis();
-    patternSetup();
+   
     // Trigger Sounds
     if (kickPattern[curStep] == 'x') kickSound.play();
     if (snarePattern[curStep] == 'x') snareSound.play();
     if (hatPattern[curStep] == 'x') hatSound.play();
     if (melodyPattern[curStep] == 'x') melodySynth.play(melodyScale[curNote] + 4, 0.8, 0, 0.2);
-    curStep++;
-    curNote++;
+
+    patternSetup();
+
     background(0);
     expensiveDraw();
+
+    curStep++;
+    curNote++;
   }
 
   if (!isLooping()) {
