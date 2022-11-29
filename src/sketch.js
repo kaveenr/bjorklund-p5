@@ -45,7 +45,7 @@ function setup() {
 
   gui = createGui("Euclidean Groove Thing");
   gui.prototype.addHTML("Sequencer Control", "<hr/>")
-  sliderRange(8, 64, 1);
+  sliderRange(5, 32, 1);
   gui.addGlobals('n');
   sliderRange(75, 500, 10);
   gui.addGlobals('bpm');
