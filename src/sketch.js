@@ -56,17 +56,6 @@ function setup() {
   noLoop();
   patternSetup();
 
-  // reverb = new p5.Reverb();
-	// reverb.drywet(0.5);
-  // melodySynth = new p5.MonoSynth();
-  // melodySynth.amp(0.5);
-	// melodySynth.setADSR(0.1, 0.1);
-  // melodySynth.disconnect();
-
-  // snareSound.disconnect();
-  // reverb.process(melodySynth, 3, 2);
-  // reverb.process(snareSound, 2, 2);
-
   gui = createGui("Euclidean Groove Thing");
   gui.prototype.addHTML("Sequencer Control", "<hr/>")
   sliderRange(5, 32, 1);
@@ -127,7 +116,7 @@ function draw() {
     if (kickPattern[curStep] == 'x') drumNotes.push("C1");
     if (snarePattern[curStep] == 'x') drumNotes.push("D1");
     if (hatPattern[curStep] == 'x') drumNotes.push("E1");
-    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.05);
+    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease([melodyScale[curNote] + 4], 0.1);
     drumKit.triggerAttackRelease(drumNotes);
 
     patternSetup();
