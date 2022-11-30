@@ -26,24 +26,12 @@ function preload() {
     baseUrl: "assets/"
   }).toDestination();
   
-  melodySynth = new Tone.PolySynth(Tone.MonoSynth, {
-    volume: -8,
+  melodySynth = new Tone.MonoSynth({
     oscillator: {
       type: "sine"
     },
     envelope: {
-      attack: 0.05,
-      decay: 0.3,
-      sustain: 0.4,
-      release: 0.8,
-    },
-    filterEnvelope: {
-      attack: 0.001,
-      decay: 0.7,
-      sustain: 0.1,
-      release: 0.8,
-      baseFrequency: 300,
-      octaves: 4
+      attack: 0.01
     }
   }).connect(reverb);
 }
@@ -104,7 +92,7 @@ function draw() {
   
   // Wrap around step
   if (curStep >= n ) curStep = 0;
-  if (curNote > melodyScale.length) curNote = 0;
+  if (curNote >= melodyScale.length) curNote = 0;
 
   // Tempo
   const delayTime = 60000 / bpm;
@@ -112,11 +100,11 @@ function draw() {
     lastUpdated = millis();
    
     // Trigger Sounds
-    const drumNotes = []
+    const drumNotes = [];
     if (kickPattern[curStep] == 'x') drumNotes.push("C1");
     if (snarePattern[curStep] == 'x') drumNotes.push("D1");
     if (hatPattern[curStep] == 'x') drumNotes.push("E1");
-    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease([melodyScale[curNote] + 4], 0.1);
+    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.1);
     drumKit.triggerAttackRelease(drumNotes);
 
     patternSetup();
