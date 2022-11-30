@@ -1,17 +1,60 @@
 var n = 32;
 var bpm = 400;
+
+var kickLength = 32;
 var kickActivations = 0;
 var kickRotation = 0;
+
+var snareLength = 32;
 var snareActivations = 0;
 var snareRotation = 0;
+
+var hatLength = 32;
 var hatActivations = 0;
 var hatRotation = 0;
+
+var melodyLength = 32;
 var melodyActivations = 0;
 var melodyRotation = 0;
 
 let curStep = 0;
 let curNote = 0;
 let lastUpdated = 0;
+
+const voiceConfig = [
+  {
+    "label": "Kick",
+    "r": 0.5,
+    "n": () => (kickLength),
+    "active": (step) => (kickPattern[step] == 'x'),
+    "color": "rgba(249, 168, 37,1)",
+    "polyColor": "rgba(249, 168, 37,0.2)"
+  },
+  {
+    "label": "Snare",
+    "r": 0.7,
+    "n": () => (snareLength),
+    "active": (step) => (snarePattern[step] == 'x'),
+    "color": "rgba(51, 105, 30,1)",
+    "polyColor": "rgba(51, 105, 30,0.2)"
+  },
+  {
+    "label": "Hat",
+    "r": 0.9,
+    "n": () => (hatLength),
+    "active": (step) => (hatPattern[step] == 'x'),
+    "color": "rgba(1, 87, 155,1)",
+    "polyColor": "rgba(1, 87, 155,0.2)"
+  },
+  {
+    "label": "Melody",
+    "r": 1.1,
+    "n": () => (melodyLength),
+    "active": (step) => (melodyPattern[step] == 'x'),
+    "color": "rgba(49, 27, 146,1)",
+    "polyColor": "rgba(49, 27, 146,0.2)"
+  }
+]
 
 let drumKit, melodySynth, reverb;
 function preload() {
@@ -54,13 +97,13 @@ function setup() {
   sliderRange(0, n, 1);
   gui.prototype.addHTML("Kick Sequence", "<hr/>")
   gui.prototype.add
-  gui.addGlobals('kickActivations','kickRotation');
+  gui.addGlobals('kickLength','kickActivations','kickRotation');
   gui.prototype.addHTML("Snare Sequence", "<hr/>")
-  gui.addGlobals('snareActivations','snareRotation');
+  gui.addGlobals('snareLength','snareActivations','snareRotation');
   gui.prototype.addHTML("Hat Sequence", "<hr/>")
-  gui.addGlobals('hatActivations','hatRotation');
+  gui.addGlobals('hatLength', 'hatActivations','hatRotation');
   gui.prototype.addHTML("Melody Sequence", "<hr/>")
-  gui.addGlobals('melodyActivations','melodyRotation');
+  gui.addGlobals('melodyLength', 'melodyActivations','melodyRotation');
 }
 
 function windowResized() {
@@ -135,81 +178,46 @@ function expensiveDraw() {
   fill(245)
   noStroke();
   circle(cx, cy, r*2.5);
-  
-  const divs = 360 / n;
-  
-  // Draw Kick Polygon
-  fill('yellow');
-  beginShape();
-  noStroke();
-  for (let subd = 0; subd < n; subd++) {
-    const rads = radians(divs * subd);
-    const divx = cx + r * cos(rads);
-    const divy = cy + r * sin(rads);
-    if (kickPattern[subd] == 'x' ) vertex(divx, divy);
-  }
-  endShape(CLOSE);
 
-  // Draw Snare Polygon
-  fill('rgba(0,255,0, 0.25)');
-  beginShape();
-  noStroke();
-  for (let subd = 0; subd < n; subd++) {
-    const rads = radians(divs * subd);
-    const divx = cx + r * cos(rads);
-    const divy = cy + r * sin(rads);
-    if (snarePattern[subd] == 'x' ) vertex(divx, divy);
-  }
-  endShape(CLOSE);
-  
-  // Draw Hat Polygon
-  fill('rgba(150,0,255, 0.20)');
-  beginShape();
-  noStroke();
-  for (let subd = 0; subd < n; subd++) {
-    const rads = radians(divs * subd);
-    const divx = cx + r * cos(rads);
-    const divy = cy + r * sin(rads);
-    if (hatPattern[subd] == 'x' ) vertex(divx, divy);
-  }
-  endShape(CLOSE);
+  for (let i = 0 ; i < voiceConfig.length; i++) {
+    const current = voiceConfig[i];
+    
+    const divs = 360 / current.n();
+    let subr = r * current.r;
 
-  // Draw Melody Polygon
-  fill('rgba(222,184,135, 0.5)');
-  beginShape();
-  noStroke();
-  for (let subd = 0; subd < n; subd++) {
-    const rads = radians(divs * subd);
-    const divx = cx + r * cos(rads);
-    const divy = cy + r * sin(rads);
-    if (melodyPattern[subd] == 'x' ) vertex(divx, divy);
-  }
-  endShape(CLOSE);
-  
-
-  // Draw Subdivisons
-  let subr = r + 20;
-  for (let subd = 0; subd < n; subd++) {
-    const rads = radians(divs * subd);
-    const divx = cx + subr * cos(rads);
-    const divy = cy + subr * sin(rads);
-    noStroke(4);
-    if (kickPattern[subd] == 'x') {
-      fill('gold');
-    } else if (snarePattern[subd] == 'x') {
-      fill('lightgreen');
-    } else if (hatPattern[subd] == 'x') {
-      fill('darkorchid');
-    } else if (melodyPattern[subd] == 'x') {
-      fill('burlywood');
-    } else {
-      noFill();
+    beginShape();
+    noStroke();
+    for (let subd = 0; subd < current.n(); subd++) {
+      const rads = radians(divs * subd);
+      const divx = cx + subr * cos(rads);
+      const divy = cy + subr * sin(rads);
+      if (current.active(subd)) {
+        vertex(divx, divy)
+      } else {
+        fill('rgb(224, 224, 224)');
+        circle(divx, divy, subr/10);
+      }
     }
-    if (curStep == subd) fill('red');
-    circle(divx, divy, r/5);
-    fill('black');
-    textSize(22);
-    textAlign(CENTER, CENTER);
-    text(subd, divx, divy);
-  }  
+    fill(current.polyColor);
+    endShape(CLOSE);
+
+    for (let subd = 0; subd < current.n(); subd++) {
+      const rads = radians(divs * subd);
+      const divx = cx + subr * cos(rads);
+      const divy = cy + subr * sin(rads);
+      noStroke();
+      if (current.active(subd)) {
+        fill(current.color);
+      } else {
+        noFill();
+      }
+      circle(divx, divy, subr/8);
+      if (curStep == subd) {
+        noFill();
+        stroke('red');
+        strokeWeight(4);
+        circle(divx, divy, subr/8);
+      }
+    }
+  }
 }
