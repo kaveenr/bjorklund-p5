@@ -1,4 +1,3 @@
-var n = 32;
 var bpm = 400;
 
 var kickLength = 32;
@@ -17,7 +16,7 @@ var melodyLength = 32;
 var melodyActivations = 0;
 var melodyRotation = 0;
 
-let curStep = 0;
+let curStep = {};
 let curNote = 0;
 let lastUpdated = 0;
 
@@ -94,9 +93,8 @@ function setup() {
   sliderRange(75, 500, 10);
   gui.addGlobals('bpm');
 
-  sliderRange(0, n, 1);
+  sliderRange(0, 32, 1);
   gui.prototype.addHTML("Kick Sequence", "<hr/>")
-  gui.prototype.add
   gui.addGlobals('kickLength','kickActivations','kickRotation');
   gui.prototype.addHTML("Snare Sequence", "<hr/>")
   gui.addGlobals('snareLength','snareActivations','snareRotation');
@@ -104,6 +102,15 @@ function setup() {
   gui.addGlobals('hatLength', 'hatActivations','hatRotation');
   gui.prototype.addHTML("Melody Sequence", "<hr/>")
   gui.addGlobals('melodyLength', 'melodyActivations','melodyRotation');
+
+  // Init Counters
+  syncSteps();
+}
+
+function syncSteps() {
+  voiceConfig.forEach((v) => {
+    curStep[v.label] = 0;
+  })
 }
 
 function windowResized() {
@@ -111,10 +118,10 @@ function windowResized() {
 }
 
 function patternSetup() {
-  kickPattern = patternRotate(bjorklund(kickActivations,n),kickRotation);
-  snarePattern = patternRotate(bjorklund(snareActivations,n),snareRotation);
-  hatPattern = patternRotate(bjorklund(hatActivations,n),hatRotation);
-  melodyPattern = patternRotate(bjorklund(melodyActivations,n),melodyRotation);
+  kickPattern = patternRotate(bjorklund(kickActivations,kickLength),kickRotation);
+  snarePattern = patternRotate(bjorklund(snareActivations,snareLength),snareRotation);
+  hatPattern = patternRotate(bjorklund(hatActivations,hatLength),hatRotation);
+  melodyPattern = patternRotate(bjorklund(melodyActivations,melodyLength),melodyRotation);
   melodyScale = makeScale(
     M_NOTES[0],
     M_PRESET[1].Value
@@ -124,6 +131,7 @@ function patternSetup() {
 function togglePlay() {
   if (!isLooping()) {
     Tone.start();
+    syncSteps();
     loop();    
   } else {
     noLoop()
@@ -134,7 +142,10 @@ function togglePlay() {
 function draw() {
   
   // Wrap around step
-  if (curStep >= n ) curStep = 0;
+  voiceConfig.forEach((v) => {
+    if (curStep[v.label] >= v.n()) curStep[v.label] = 0;
+  })
+  //if (curStep >= n ) curStep = 0;
   if (curNote >= melodyScale.length) curNote = 0;
 
   // Tempo
@@ -144,10 +155,10 @@ function draw() {
    
     // Trigger Sounds
     const drumNotes = [];
-    if (kickPattern[curStep] == 'x') drumNotes.push("C1");
-    if (snarePattern[curStep] == 'x') drumNotes.push("D1");
-    if (hatPattern[curStep] == 'x') drumNotes.push("E1");
-    if (melodyPattern[curStep] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.1);
+    if (kickPattern[curStep['Kick']] == 'x') drumNotes.push("C1");
+    if (snarePattern[curStep['Snare']] == 'x') drumNotes.push("D1");
+    if (hatPattern[curStep['Hat']] == 'x') drumNotes.push("E1");
+    if (melodyPattern[curStep['Melody']] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.1);
     drumKit.triggerAttackRelease(drumNotes);
 
     patternSetup();
@@ -155,7 +166,9 @@ function draw() {
     background(0);
     expensiveDraw();
 
-    curStep++;
+    voiceConfig.forEach((v) => {
+      curStep[v.label] = curStep[v.label] + 1;
+    })
     curNote++;
   }
 
@@ -212,10 +225,11 @@ function expensiveDraw() {
         noFill();
       }
       circle(divx, divy, subr/8);
-      if (curStep == subd) {
+      if (curStep[current.label] == subd) {
         noFill();
         stroke('red');
         strokeWeight(4);
+        line(cx, cy, divx, divy);
         circle(divx, divy, subr/8);
       }
     }
