@@ -53,12 +53,14 @@ const voiceConfig = [
     "color": "rgba(49, 27, 146,1)",
     "polyColor": "rgba(49, 27, 146,0.2)"
   }
-]
+];
 
 let drumKit, melodySynth, reverb;
 function preload() {
 
   reverb = new Tone.Reverb(0.5).toDestination();
+  reverb.preDelay = 0.2;
+  widener = new Tone.StereoWidener(0.4).toDestination();
   drumKit = new Tone.Sampler({
     urls: {
       C1: "kick.mp3",
@@ -66,7 +68,7 @@ function preload() {
       E1: "hat.mp3"
     },
     baseUrl: "assets/"
-  }).toDestination();
+  }).connect(widener);
   
   melodySynth = new Tone.MonoSynth({
     oscillator: {
@@ -74,11 +76,12 @@ function preload() {
     },
     envelope: {
       attack: 0.01
-    }
+    },
+    volume: -6
   }).connect(reverb);
 }
 
-let kickPattern;
+let kickPattern, melodyTuring;
 
 function setup() {
   let cnv = createCanvas(windowWidth, windowHeight);
@@ -88,8 +91,6 @@ function setup() {
 
   gui = createGui("Euclidean Groove Thing");
   gui.prototype.addHTML("Sequencer Control", "<hr/>")
-  sliderRange(5, 32, 1);
-  gui.addGlobals('n');
   sliderRange(75, 500, 10);
   gui.addGlobals('bpm');
 
@@ -105,6 +106,8 @@ function setup() {
 
   // Init Counters
   syncSteps();
+
+  melodyTuring = new TuringMech(8,0.5);
 }
 
 function syncSteps() {
@@ -123,9 +126,10 @@ function patternSetup() {
   hatPattern = patternRotate(bjorklund(hatActivations,hatLength),hatRotation);
   melodyPattern = patternRotate(bjorklund(melodyActivations,melodyLength),melodyRotation);
   melodyScale = makeScale(
-    M_NOTES[0],
-    M_PRESET[1].Value
+    M_NOTES[1],
+    M_PRESET[2].Value
   );
+  melodyScale = [...melodyScale, ...melodyScale.reverse()]
 }
 
 function togglePlay() {
@@ -145,8 +149,6 @@ function draw() {
   voiceConfig.forEach((v) => {
     if (curStep[v.label] >= v.n()) curStep[v.label] = 0;
   })
-  //if (curStep >= n ) curStep = 0;
-  if (curNote >= melodyScale.length) curNote = 0;
 
   // Tempo
   const delayTime = 60000 / bpm;
@@ -158,21 +160,22 @@ function draw() {
     if (kickPattern[curStep['Kick']] == 'x') drumNotes.push("C1");
     if (snarePattern[curStep['Snare']] == 'x') drumNotes.push("D1");
     if (hatPattern[curStep['Hat']] == 'x') drumNotes.push("E1");
-    if (melodyPattern[curStep['Melody']] == 'x') melodySynth.triggerAttackRelease(melodyScale[curNote] + 4, 0.1);
-    drumKit.triggerAttackRelease(drumNotes);
-
+    drumKit.triggerAttackRelease(drumNotes, 0.4);
+    if (melodyPattern[curStep['Melody']] == 'x') {
+      let choiceNote = melodyTuring.advance();
+      melodySynth.triggerAttackRelease(melodyScale[choiceNote] + 4, 0.1);
+    }
     patternSetup();
-
     background(0);
     expensiveDraw();
 
     voiceConfig.forEach((v) => {
       curStep[v.label] = curStep[v.label] + 1;
     })
-    curNote++;
   }
 
   if (!isLooping()) {
+    background(0);
 		fill(color(255, 220));
 		rect(0, 0, width, height);
 		fill(color(0));
