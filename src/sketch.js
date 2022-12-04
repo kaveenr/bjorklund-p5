@@ -22,6 +22,11 @@ let curStep = {};
 let curNote = 0;
 let lastUpdated = 0;
 
+var muteKick = false;
+var muteSnare = false;
+var muteHat = false;
+var muteMelody = false;
+
 let drumKit, melodySynth, reverb;
 
 function preload() {
@@ -134,6 +139,10 @@ function setup() {
   gui.prototype.addButton("Tweak Parameters / Advance", ()=> {
     gui1.toggleVisibility();
   })
+
+  gui.prototype.addHTML("Mutes", "mute parts of the sequences");
+  gui.addGlobals('muteKick', 'muteSnare', 'muteHat', 'muteMelody');
+
 }
 
 function randomizeSequence(){
@@ -197,12 +206,12 @@ function draw() {
    
     // Trigger Sounds
     const drumNotes = [];
-    if (kickPattern.advance()) drumNotes.push("C1");
-    if (snarePattern.advance()) drumNotes.push("D1");
-    if (hatPattern.advance()) drumNotes.push("E1");
+    if (kickPattern.advance() && !muteKick) drumNotes.push("C1");
+    if (snarePattern.advance() && !muteSnare) drumNotes.push("D1");
+    if (hatPattern.advance() && !muteHat) drumNotes.push("E1");
     drumKit.triggerAttackRelease(drumNotes, 0.4);
 
-    if (melodyPattern.advance()) {
+    if (melodyPattern.advance() && !muteMelody) {
       let choiceNote = melodyTuring.advance();
       // TODO: Fix this shit
       melodySynth.triggerAttackRelease((melodyScale[choiceNote] || melodyScale[0]) + 3, 0.1);
