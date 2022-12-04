@@ -38,11 +38,42 @@ function bjorklund(k,n) {
   return _distribute(res).join("");
 }
 
-function patternRotate(_patt, n) {
+function patternRotate(_patt, direction, n) {
   let patt = _patt.split("");
   for (let i = 0; i < n; i ++) {
-    let step = patt.shift()
-    patt.push(step);
+    if (direction) {
+      patt.unshift(patt.pop());
+    } else {
+      patt.push(patt.shift());
+    }
   }
-  return patt.join("")
+  return patt.join("");
+}
+
+class EuclideanSequence {
+  constructor(k,n) {
+    this.step = 0;
+    this.k = k;
+    this.n = n;
+    this.seq = bjorklund(k,n);
+  }
+  update(k,n) {
+    if (this.k == k && this.n == n) return;
+    this.k = k;
+    this.n = n;
+    this.seq = bjorklund(k,n);
+    this.step = 0;
+  }
+  rotate(direc) {
+    this.seq = patternRotate(this.seq, direc, 1);
+  }
+  advance() {
+    if (this.step >= this.n) this.step = 0;
+    let val = this.seq[this.step] == 'x'
+    this.step++;
+    return val;
+  }
+  isActive(n) {
+    return this.seq[n] == 'x';
+  }
 }

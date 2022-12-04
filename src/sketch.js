@@ -4,19 +4,15 @@ var bpm = 400;
 
 var kickLength = 16;
 var kickActivations = 0;
-var kickRotation = 0;
 
 var snareLength = 16;
 var snareActivations = 0;
-var snareRotation = 0;
 
 var hatLength = 16;
 var hatActivations = 0;
-var hatRotation = 0;
 
 var melodyLength = 16;
 var melodyActivations = 0;
-var melodyRotation = 0;
 var melodyPreset =0;
 var melodyRoot = 0;
 
@@ -26,42 +22,8 @@ let curStep = {};
 let curNote = 0;
 let lastUpdated = 0;
 
-const voiceConfig = [
-  {
-    "label": "Kick",
-    "r": 0.5,
-    "n": () => (kickLength),
-    "active": (step) => (kickPattern[step] == 'x'),
-    "color": "rgba(249, 168, 37,1)",
-    "polyColor": "rgba(249, 168, 37,0.2)"
-  },
-  {
-    "label": "Snare",
-    "r": 0.7,
-    "n": () => (snareLength),
-    "active": (step) => (snarePattern[step] == 'x'),
-    "color": "rgba(51, 105, 30,1)",
-    "polyColor": "rgba(51, 105, 30,0.2)"
-  },
-  {
-    "label": "Hat",
-    "r": 0.9,
-    "n": () => (hatLength),
-    "active": (step) => (hatPattern[step] == 'x'),
-    "color": "rgba(1, 87, 155,1)",
-    "polyColor": "rgba(1, 87, 155,0.2)"
-  },
-  {
-    "label": "Melody",
-    "r": 1.1,
-    "n": () => (melodyLength),
-    "active": (step) => (melodyPattern[step] == 'x'),
-    "color": "rgba(49, 27, 146,1)",
-    "polyColor": "rgba(49, 27, 146,0.2)"
-  }
-];
-
 let drumKit, melodySynth, reverb;
+
 function preload() {
 
   reverb = new Tone.Reverb(0.5).toDestination();
@@ -83,11 +45,11 @@ function preload() {
     envelope: {
       attack: 0.01
     },
-    volume: -6
-  }).connect(reverb);
+    volume: -9
+  }).connect(widener);
 }
 
-let kickPattern, melodyTuring;
+let kickPattern, melodyTuring, voiceConfig;
 
 function setup() {
   let cnv = createCanvas(windowWidth, windowHeight);
@@ -95,7 +57,45 @@ function setup() {
   noLoop();
 
   randomizeSequence();
+
   melodyTuring = new TuringMech(16,turingProbability);
+  kickPattern = new EuclideanSequence(kickActivations,kickLength);
+  snarePattern = new EuclideanSequence(snareActivations,snareLength);
+  hatPattern = new EuclideanSequence(hatActivations,hatLength);
+  melodyPattern = new EuclideanSequence(melodyActivations,melodyLength);
+
+  voiceConfig = [
+    {
+      "label": "Kick",
+      "r": 0.5,
+      "seq": kickPattern,
+      "color": "rgba(249, 168, 37,1)",
+      "polyColor": "rgba(249, 168, 37,0.2)"
+    },
+    {
+      "label": "Snare",
+      "r": 0.7,
+      "seq": snarePattern,
+      "color": "rgba(51, 105, 30,1)",
+      "polyColor": "rgba(51, 105, 30,0.2)"
+    },
+    {
+      "label": "Hat",
+      "r": 0.9,
+      "seq": hatPattern,
+      "color": "rgba(1, 87, 155,1)",
+      "polyColor": "rgba(1, 87, 155,0.2)"
+    },
+    {
+      "label": "Melody",
+      "r": 1.1,
+      "seq": melodyPattern,
+      "color": "rgba(49, 27, 146,1)",
+      "polyColor": "rgba(49, 27, 146,0.2)"
+    }
+  ];
+  
+
   patternSetup();
 
   gui = createGui("Euclidean Groove Thing");
@@ -112,13 +112,21 @@ function setup() {
   gui1.hide();
   sliderRange(0, 32, 1);
   gui1.prototype.addHTML("Kick Sequence", "Euclidean Kick Sequence")
-  gui1.addGlobals('kickLength','kickActivations','kickRotation');
+  gui1.addGlobals('kickLength','kickActivations');
+  gui1.prototype.addButton("Rotate L", () => kickPattern.rotate(true))
+  gui1.prototype.addButton("Rotate R", () => kickPattern.rotate(false))
   gui1.prototype.addHTML("Snare Sequence", "Euclidean Snare Sequence")
-  gui1.addGlobals('snareLength','snareActivations','snareRotation');
+  gui1.addGlobals('snareLength','snareActivations');
+  gui1.prototype.addButton("Rotate L", () => snarePattern.rotate(true))
+  gui1.prototype.addButton("Rotate R", () => snarePattern.rotate(false))
   gui1.prototype.addHTML("Hat Sequence", "Euclidean Hat Sequence")
-  gui1.addGlobals('hatLength', 'hatActivations','hatRotation');
+  gui1.addGlobals('hatLength', 'hatActivations');
+  gui1.prototype.addButton("Rotate L", () => hatPattern.rotate(true))
+  gui1.prototype.addButton("Rotate R", () => hatPattern.rotate(false))
   gui1.prototype.addHTML("Melody Sequence", "Euclidean Melody Sequence with Turing Note Sequcer")
-  gui1.addGlobals('melodyLength', 'melodyActivations','melodyRotation',);
+  gui1.addGlobals('melodyLength', 'melodyActivations');
+  gui1.prototype.addButton("Rotate L", () => melodyPattern.rotate(true))
+  gui1.prototype.addButton("Rotate R", () => melodyPattern.rotate(false))
   sliderRange(0, 1, 0.1);
   gui1.addGlobals('turingProbability');
   gui1.setPosition(width - 220,10);
@@ -126,9 +134,6 @@ function setup() {
   gui.prototype.addButton("Tweak Parameters / Advance", ()=> {
     gui1.toggleVisibility();
   })
-
-  // Init Counters
-  syncSteps();
 }
 
 function randomizeSequence(){
@@ -154,33 +159,29 @@ function randomizeSequence(){
   melodyPreset = floor(random(0,1));
 }
 
-function syncSteps() {
-  voiceConfig.forEach((v) => {
-    curStep[v.label] = 0;
-  })
-}
-
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
 function patternSetup() {
-  kickPattern = patternRotate(bjorklund(kickActivations,kickLength),kickRotation);
-  snarePattern = patternRotate(bjorklund(snareActivations,snareLength),snareRotation);
-  hatPattern = patternRotate(bjorklund(hatActivations,hatLength),hatRotation);
-  melodyPattern = patternRotate(bjorklund(melodyActivations,melodyLength),melodyRotation);
+
+  kickPattern.update(kickActivations,kickLength);
+  snarePattern.update(snareActivations,snareLength);
+  hatPattern.update(hatActivations,hatLength);
+  melodyPattern.update(melodyActivations,melodyLength);
+  
+  melodyTuring.setProbability(turingProbability);
+
   melodyScale = makeScale(
     M_NOTES[melodyRoot],
     M_PRESET[melodyPreset].Value
   );
   melodyScale = [...melodyScale, ...melodyScale.reverse()]
-  melodyTuring.setProbability(turingProbability);
 }
 
 function togglePlay() {
   if (!isLooping()) {
     Tone.start();
-    syncSteps();
     loop();    
   } else {
     noLoop()
@@ -190,11 +191,6 @@ function togglePlay() {
 
 function draw() {
   
-  // Wrap around step
-  voiceConfig.forEach((v) => {
-    if (curStep[v.label] >= v.n()) curStep[v.label] = 0;
-  })
-
   // Tempo
   const delayTime = 60000 / bpm;
   if (millis() > lastUpdated + delayTime) {
@@ -202,21 +198,19 @@ function draw() {
    
     // Trigger Sounds
     const drumNotes = [];
-    if (kickPattern[curStep['Kick']] == 'x') drumNotes.push("C1");
-    if (snarePattern[curStep['Snare']] == 'x') drumNotes.push("D1");
-    if (hatPattern[curStep['Hat']] == 'x') drumNotes.push("E1");
+    if (kickPattern.advance()) drumNotes.push("C1");
+    if (snarePattern.advance()) drumNotes.push("D1");
+    if (hatPattern.advance()) drumNotes.push("E1");
     drumKit.triggerAttackRelease(drumNotes, 0.4);
-    if (melodyPattern[curStep['Melody']] == 'x') {
+
+    if (melodyPattern.advance()) {
       let choiceNote = melodyTuring.advance();
       melodySynth.triggerAttackRelease(melodyScale[choiceNote] + 4, 0.1);
     }
+
     patternSetup();
     background(0);
     expensiveDraw();
-
-    voiceConfig.forEach((v) => {
-      curStep[v.label] = curStep[v.label] + 1;
-    })
   }
 
   if (!isLooping()) {
@@ -243,16 +237,16 @@ function expensiveDraw() {
   for (let i = 0 ; i < voiceConfig.length; i++) {
     const current = voiceConfig[i];
     
-    const divs = 360 / current.n();
+    const divs = 360 / current.seq.n;
     let subr = r * current.r;
 
     beginShape();
     noStroke();
-    for (let subd = 0; subd < current.n(); subd++) {
+    for (let subd = 0; subd < current.seq.n; subd++) {
       const rads = radians(divs * subd);
       const divx = cx + subr * cos(rads);
       const divy = cy + subr * sin(rads);
-      if (current.active(subd)) {
+      if (current.seq.isActive(subd)) {
         vertex(divx, divy)
       } else {
         fill('rgb(224, 224, 224)');
@@ -262,18 +256,18 @@ function expensiveDraw() {
     fill(current.polyColor);
     endShape(CLOSE);
 
-    for (let subd = 0; subd < current.n(); subd++) {
+    for (let subd = 0; subd < current.seq.n; subd++) {
       const rads = radians(divs * subd);
       const divx = cx + subr * cos(rads);
       const divy = cy + subr * sin(rads);
       noStroke();
-      if (current.active(subd)) {
+      if (current.seq.isActive(subd)) {
         fill(current.color);
       } else {
         noFill();
       }
       circle(divx, divy, subr/8);
-      if (curStep[current.label] == subd) {
+      if (current.seq.step - 1 == subd) {
         noFill();
         stroke('red');
         strokeWeight(4);
