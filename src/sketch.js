@@ -17,6 +17,8 @@ var hatRotation = 0;
 var melodyLength = 16;
 var melodyActivations = 0;
 var melodyRotation = 0;
+var melodyPreset =0;
+var melodyRoot = 0;
 
 var turingProbability = 0.5
 
@@ -148,6 +150,8 @@ function randomizeSequence(){
   patlen = floor(random(3,32));
   melodyLength = patlen;
   melodyActivations = floor(random(RANDOM_MIN_ACT,patlen));
+  melodyRoot = floor(random(0,M_NOTES.length))
+  melodyPreset = floor(random(0,1));
 }
 
 function syncSteps() {
@@ -166,8 +170,8 @@ function patternSetup() {
   hatPattern = patternRotate(bjorklund(hatActivations,hatLength),hatRotation);
   melodyPattern = patternRotate(bjorklund(melodyActivations,melodyLength),melodyRotation);
   melodyScale = makeScale(
-    M_NOTES[1],
-    M_PRESET[2].Value
+    M_NOTES[melodyRoot],
+    M_PRESET[melodyPreset].Value
   );
   melodyScale = [...melodyScale, ...melodyScale.reverse()]
   melodyTuring.setProbability(turingProbability);
