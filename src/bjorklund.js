@@ -51,11 +51,12 @@ function patternRotate(_patt, direction, n) {
 }
 
 class EuclideanSequence {
-  constructor(k,n) {
+  constructor(k,n, rotProbability = 0.1) {
     this.step = 0;
     this.k = k;
     this.n = n;
     this.seq = bjorklund(k,n);
+    this.rotProbability = rotProbability;
   }
   update(k,n) {
     if (this.k == k && this.n == n) return;
@@ -68,6 +69,7 @@ class EuclideanSequence {
     this.seq = patternRotate(this.seq, direc, 1);
   }
   advance() {
+    if (this.doRotate()) this.rotate(true);
     if (this.step >= this.n) this.step = 0;
     let val = this.seq[this.step] == 'x'
     this.step++;
@@ -75,5 +77,8 @@ class EuclideanSequence {
   }
   isActive(n) {
     return this.seq[n] == 'x';
+  }
+  doRotate() {
+    return this.rotProbability > random(0,1);
   }
 }

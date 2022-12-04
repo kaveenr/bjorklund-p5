@@ -19,8 +19,7 @@ class TuringMech{
         )
     }
     doMutate() {
-        let choice = round(random(0,2) * this.probability);
-        return choice == 1;
+        return this.probability > random(0,1);
     }
     setProbability(val) {
         this.probability = val;
