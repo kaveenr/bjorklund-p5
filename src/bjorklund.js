@@ -69,7 +69,9 @@ class EuclideanSequence {
     this.seq = patternRotate(this.seq, direc, 1);
   }
   advance() {
-    if (this.doRotate()) this.rotate(true);
+    if (this.doRotate()) {
+      this.rotate(this.doRotate());
+    }
     if (this.step >= this.n) this.step = 0;
     let val = this.seq[this.step] == 'x'
     this.step++;
