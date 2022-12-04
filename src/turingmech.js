@@ -22,4 +22,7 @@ class TuringMech{
         let choice = round(random(0,2) * this.probability);
         return choice == 1;
     }
+    setProbability(val) {
+        this.probability = val;
+    }
 }

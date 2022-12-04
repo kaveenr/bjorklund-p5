@@ -1,20 +1,24 @@
+const RANDOM_MIN_ACT = 3;
+
 var bpm = 400;
 
-var kickLength = 32;
+var kickLength = 16;
 var kickActivations = 0;
 var kickRotation = 0;
 
-var snareLength = 32;
+var snareLength = 16;
 var snareActivations = 0;
 var snareRotation = 0;
 
-var hatLength = 32;
+var hatLength = 16;
 var hatActivations = 0;
 var hatRotation = 0;
 
-var melodyLength = 32;
+var melodyLength = 16;
 var melodyActivations = 0;
 var melodyRotation = 0;
+
+var turingProbability = 0.5
 
 let curStep = {};
 let curNote = 0;
@@ -87,27 +91,63 @@ function setup() {
   let cnv = createCanvas(windowWidth, windowHeight);
   cnv.mousePressed(togglePlay);
   noLoop();
+
+  randomizeSequence();
+  melodyTuring = new TuringMech(16,turingProbability);
   patternSetup();
 
   gui = createGui("Euclidean Groove Thing");
-  gui.prototype.addHTML("Sequencer Control", "<hr/>")
+  gui.prototype.addHTML("About", "Msuical Sequncer based on Euclidean distribution")
   sliderRange(75, 500, 10);
   gui.addGlobals('bpm');
+  gui.setPosition(10,10);
+  gui.prototype.addButton("Randomize / Generate", ()=> {
+    randomizeSequence();
+    patternSetup();
+  })
 
+  gui1 = createGui("Sequence Modifiers");
+  gui1.hide();
   sliderRange(0, 32, 1);
-  gui.prototype.addHTML("Kick Sequence", "<hr/>")
-  gui.addGlobals('kickLength','kickActivations','kickRotation');
-  gui.prototype.addHTML("Snare Sequence", "<hr/>")
-  gui.addGlobals('snareLength','snareActivations','snareRotation');
-  gui.prototype.addHTML("Hat Sequence", "<hr/>")
-  gui.addGlobals('hatLength', 'hatActivations','hatRotation');
-  gui.prototype.addHTML("Melody Sequence", "<hr/>")
-  gui.addGlobals('melodyLength', 'melodyActivations','melodyRotation');
+  gui1.prototype.addHTML("Kick Sequence", "Euclidean Kick Sequence")
+  gui1.addGlobals('kickLength','kickActivations','kickRotation');
+  gui1.prototype.addHTML("Snare Sequence", "Euclidean Snare Sequence")
+  gui1.addGlobals('snareLength','snareActivations','snareRotation');
+  gui1.prototype.addHTML("Hat Sequence", "Euclidean Hat Sequence")
+  gui1.addGlobals('hatLength', 'hatActivations','hatRotation');
+  gui1.prototype.addHTML("Melody Sequence", "Euclidean Melody Sequence with Turing Note Sequcer")
+  gui1.addGlobals('melodyLength', 'melodyActivations','melodyRotation',);
+  sliderRange(0, 1, 0.1);
+  gui1.addGlobals('turingProbability');
+  gui1.setPosition(width - 220,10);
+
+  gui.prototype.addButton("Tweak Parameters / Advance", ()=> {
+    gui1.toggleVisibility();
+  })
 
   // Init Counters
   syncSteps();
+}
 
-  melodyTuring = new TuringMech(8,0.5);
+function randomizeSequence(){
+
+  bpm = floor(random(100,400));
+
+  let patlen = floor(random(3,32));
+  kickLength = patlen;
+  kickActivations = floor(random(RANDOM_MIN_ACT,patlen));
+  
+  patlen = floor(random(3,32));
+  snareLength = patlen;
+  snareActivations = floor(random(RANDOM_MIN_ACT,patlen));
+  
+  patlen = floor(random(3,32));
+  hatLength = patlen;
+  hatActivations = floor(random(RANDOM_MIN_ACT,patlen))
+
+  patlen = floor(random(3,32));
+  melodyLength = patlen;
+  melodyActivations = floor(random(RANDOM_MIN_ACT,patlen));
 }
 
 function syncSteps() {
@@ -130,6 +170,7 @@ function patternSetup() {
     M_PRESET[2].Value
   );
   melodyScale = [...melodyScale, ...melodyScale.reverse()]
+  melodyTuring.setProbability(turingProbability);
 }
 
 function togglePlay() {
