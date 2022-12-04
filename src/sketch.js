@@ -27,11 +27,15 @@ var muteSnare = false;
 var muteHat = false;
 var muteMelody = false;
 
-let drumKit, melodySynth, reverb;
+let drumKit, verbKit, melodySynth, reverb;
 
 function preload() {
 
-  reverb = new Tone.Reverb(0.2).toDestination();
+  reverb = new Tone.Reverb({
+    decay: 0.5,
+    preDelay: 0.1,
+    wet: 0.4
+  }).toDestination();
   widener = new Tone.StereoWidener(0.4).toDestination();
   drumKit = new Tone.Sampler({
     urls: {
@@ -42,6 +46,14 @@ function preload() {
     baseUrl: "assets/",
     volume: -8
   }).connect(widener);
+
+  verbKit = new Tone.Sampler({
+    urls: {
+      D1: "snare.mp3",
+    },
+    baseUrl: "assets/",
+    volume: -8
+  }).connect(reverb);
   
   melodySynth = new Tone.MonoSynth({
     oscillator: {
@@ -207,7 +219,7 @@ function draw() {
     // Trigger Sounds
     const drumNotes = [];
     if (kickPattern.advance() && !muteKick) drumNotes.push("C1");
-    if (snarePattern.advance() && !muteSnare) drumNotes.push("D1");
+    if (snarePattern.advance() && !muteSnare) verbKit.triggerAttackRelease("D1", 0.4) //drumNotes.push("D1");
     if (hatPattern.advance() && !muteHat) drumNotes.push("E1");
     drumKit.triggerAttackRelease(drumNotes, 0.4);
 
