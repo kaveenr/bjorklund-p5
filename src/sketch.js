@@ -26,8 +26,7 @@ let drumKit, melodySynth, reverb;
 
 function preload() {
 
-  reverb = new Tone.Reverb(0.5).toDestination();
-  reverb.preDelay = 0.2;
+  reverb = new Tone.Reverb(0.2).toDestination();
   widener = new Tone.StereoWidener(0.4).toDestination();
   drumKit = new Tone.Sampler({
     urls: {
@@ -35,18 +34,19 @@ function preload() {
       D1: "snare.mp3",
       E1: "hat.mp3"
     },
-    baseUrl: "assets/"
+    baseUrl: "assets/",
+    volume: -8
   }).connect(widener);
   
   melodySynth = new Tone.MonoSynth({
     oscillator: {
-      type: "sine"
+      type: "sawtooth"
     },
     envelope: {
       attack: 0.01
     },
-    volume: -9
-  }).connect(widener);
+    volume: -8
+  }).connect(reverb);
 }
 
 let kickPattern, melodyTuring, voiceConfig;
@@ -176,7 +176,6 @@ function patternSetup() {
     M_NOTES[melodyRoot],
     M_PRESET[melodyPreset].Value
   );
-  melodyScale = [...melodyScale, ...melodyScale.reverse()]
 }
 
 function togglePlay() {
@@ -205,7 +204,8 @@ function draw() {
 
     if (melodyPattern.advance()) {
       let choiceNote = melodyTuring.advance();
-      melodySynth.triggerAttackRelease(melodyScale[choiceNote] + 4, 0.1);
+      // TODO: Fix this shit
+      melodySynth.triggerAttackRelease((melodyScale[choiceNote] || melodyScale[0]) + 3, 0.1);
     }
 
     patternSetup();
